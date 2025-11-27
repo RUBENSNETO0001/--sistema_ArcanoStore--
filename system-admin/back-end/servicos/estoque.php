@@ -8,7 +8,6 @@ $ESTOQUE_MINIMO = 5;
 $produtosBaixoEstoque = array();
 
 if ($conexao) {
-    // Seleciona itens com estoque abaixo do mínimo
     $sql = "SELECT 
                 id_produto AS id, 
                 nome, 
