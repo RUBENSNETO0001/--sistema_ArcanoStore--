@@ -1,0 +1,140 @@
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex: 1; 
+    padding: 2rem; 
+    overflow-y: auto; 
+}
+
+/* Título principal do painel */
+.main-content h2 {
+    font-weight: 800; /* Extrabold */
+    color: white;
+}
+
+/* ========================================================= */
+/* 3. ESTILO DA BARRA LATERAL (SIDEBAR)                      */
+/* ========================================================= */
+.sidebar {
+    width: 256px; 
+    background-color: var(--arcanomaisescuro);
+    border-right: 1px solid var(--arcanoborda);
+    padding-top: 1.5rem; 
+    padding-bottom: 1.5rem;
+    display: none; /* Esconder por padrão em telas pequenas */
+}
+
+@media (min-width: 768px) {
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+.sidebar-logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--arcanoprimary);
+    padding: 0 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    margin: 0.25rem 0;
+    text-decoration: none;
+    color: #94a3b8;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar-nav a:hover, .sidebar-nav a.active {
+    background-color: var(--arcanoprimary);
+    color: white;
+    background-color: rgba(139, 92, 246, 0.1); /* Violeta 10% */
+    color: var(--arcanoprimary);
+}
+
+.sidebar-nav a.active {
+    border-left: 3px solid var(--arcanoprimary);
+}
+
+/* ========================================================= */
+/* 4. ESTILO DOS CARTÕES DE MÉTRICAS (STATCARD)              */
+/* ========================================================= */
+.kpi-grid {
+    display: grid;
+    /* Ajusta para 1 coluna no mobile, e no mínimo 250px por coluna no desktop */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+    gap: 1.5rem; 
+    margin-bottom: 2.5rem;
+}
+
+.stat-card {
+    background-color: var(--arcanomaisescuro);
+    padding: 1.5rem; 
+    border-radius: 0.75rem; 
+    border: 1px solid var(--arcanoborda);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.stat-card-value {
+    font-size: 1.875rem; /* 30px */
+    font-weight: bold;
+    color: var(--arcanotexto);
+}
+
+.stat-card-trend {
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.trend-positive {
+    color: var(--cor-sucesso);
+}
+
+.trend-alert {
+    color: var(--cor-alerta);
+}
+
+.stat-card-icon-wrapper {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background-color: var(--arcanofundo);
+}
+
+/* ========================================================= */
+/* 5. ESTILO DA ÁREA DE CONTEÚDO E TABELAS (Gráfico/Pedidos) */
+/* ========================================================= */
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .content-grid {
+        /* Layout principal: 2/3 para gráfico, 1/3 para listas */
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+.card-panel {
+    background-color: var(--arcanomaisescuro);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--arcanoborda);
+}
+
+/* Estilo específico para o card de alerta de estoque */
+.alert-card {
+    border: 1px solid var(--cor-alerta);
+}

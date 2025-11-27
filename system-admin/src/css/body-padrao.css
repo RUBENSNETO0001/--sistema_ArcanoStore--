@@ -1,7 +1,26 @@
-*{
+:root {
+    --arcanofundo: #0f172a; 
+    --arcanomaisescuro: #020617;
+    --arcanoprimary: #8b5cf6; 
+    --arcanotexto: #e2e8f0;
+    --arcanoborda: #1e293b; 
+}
+
+body {
+    background-color: var(--arcanofundo);
+    color: var(--arcanotexto);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+}
+
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem; 
+    overflow-y: auto; 
 }
