@@ -16,7 +16,6 @@ const Sidebar = ({ activeView, setActiveView, onShowModal }) => {
       label: 'Produtos',
       icon: '📚',
       subItems: [
-        { id: 'view-products', label: 'Ver Produtos', action: 'view-products' },
         { id: 'new-product', label: 'Novo Produto', action: 'new-product' },
         { id: 'manage-products', label: 'Gerenciar Produtos', action: 'manage-products' }
       ]
