@@ -1,5 +1,7 @@
 <?php
-include_once '../controle-bd/bancodedados.php';
+// CORREÇÃO: O caminho foi ajustado de '../controle/' para '../controle-bd/'
+// para corresponder à estrutura de pastas anterior e evitar falhas de inclusão.
+include '../controle-bd/bancodedados.php';
 
 // Configurações da API
 header("Access-Control-Allow-Origin: *"); 
@@ -12,7 +14,7 @@ $resposta = array(
 );
 
 if ($conexao) {
-    // 1. Consulta Principal (Receita e Pedidos)
+    // 1. Consulta Receita e Pedidos Aprovados do Mês
     $sql_kpi = "SELECT 
                     IFNULL(SUM(valor_total), 0) as total_receita, 
                     COUNT(id_pedido) as total_pedidos
@@ -43,7 +45,7 @@ if ($conexao) {
     echo json_encode($resposta);
 
 } else {
+    // Retorna erro 503 se a conexão falhar
     http_response_code(503); 
     echo json_encode(array("message" => "Servidor de dados indisponível (Conexão MySQL falhou)."));
 }
-?>

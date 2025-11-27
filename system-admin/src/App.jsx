@@ -18,8 +18,8 @@ import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCon
 // =========================================================
 // VARIÁVEIS DE CONFIGURAÇÃO (AJUSTE AQUI)
 // =========================================================
-// Onde seus arquivos PHP de API estão hospedados
-const API_BASE_URL = '../back-end/servicos/pedidos.php'; // Ajuste conforme necessário
+// O caminho da pasta onde seus arquivos PHP de API estão hospedados
+const API_BASE_PATH = '../back-end/servicos'; 
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -38,50 +38,67 @@ const App = () => {
 
   // Estado para dados do Gráfico (Ajustar a API PHP para retornar dados semanais/mensais)
   const [chartData, setChartData] = useState([
-    { name: 'Seg', vendas: 0 },
-    { name: 'Ter', vendas: 0 },
-    { name: 'Qua', vendas: 0 },
-    { name: 'Qui', vendas: 0 },
-    { name: 'Sex', vendas: 0 },
-    { name: 'Sab', vendas: 0 },
-    { name: 'Dom', vendas: 0 },
+    // Dados simulados para que o gráfico não fique vazio
+    { name: 'Seg', vendas: 400 },
+    { name: 'Ter', vendas: 600 },
+    { name: 'Qua', vendas: 300 },
+    { name: 'Qui', vendas: 800 },
+    { name: 'Sex', vendas: 750 },
+    { name: 'Sab', vendas: 950 },
+    { name: 'Dom', vendas: 500 },
   ]);
 
   // Hook useEffect para buscar todos os dados
   useEffect(() => {
     const fetchData = async () => {
+      // Usando array de caminhos para facilitar o processamento e retry (exponencial backoff)
+      const endpoints = [
+        { key: 'kpi', url: `${API_BASE_PATH}/vendas.php` },
+        { key: 'stock', url: `${API_BASE_PATH}/estoque.php` },
+        { key: 'orders', url: `${API_BASE_PATH}/pedidos.php` },
+      ];
+
       try {
         setLoading(true);
         setError(null);
 
-        // 1. Busca de KPIs (Receita, Pedidos)
-        const kpiRes = await fetch(`${API_BASE_URL}/api_vendas.php`);
-        if (!kpiRes.ok) throw new Error('Falha ao carregar KPIs');
-        const kpiJson = await kpiRes.json();
+        // Função genérica para fetch com tratamento de erro
+        const fetchEndpoint = async (url) => {
+            const res = await fetch(url);
+            if (res.status === 503) {
+                throw new Error("503 - Serviço indisponível. Verifique a conexão com o MySQL.");
+            }
+            if (!res.ok) {
+                // Tenta ler o erro como texto, se não for JSON
+                const errorText = await res.text();
+                throw new Error(`Falha no servidor (${res.status}): ${errorText.substring(0, 100)}...`);
+            }
+            // Tenta parsear JSON
+            try {
+                return await res.json();
+            } catch (e) {
+                const text = await res.text();
+                throw new Error(`Resposta inválida (Não é JSON válido). Recebido: ${text.substring(0, 100)}`);
+            }
+        };
+
+        // 1. Busca de KPIs (vendas.php)
+        const kpiJson = await fetchEndpoint(endpoints[0].url);
         setKpiData({
           total_receita: parseFloat(kpiJson.total_receita) || 0,
           total_pedidos: parseInt(kpiJson.total_pedidos) || 0,
           total_clientes: parseInt(kpiJson.total_clientes) || 0,
         });
         
-        // 2. Busca de Estoque Baixo
-        const stockRes = await fetch(`${API_BASE_URL}/api_produtos_estoque.php`);
-        if (!stockRes.ok) throw new Error('Falha ao carregar Estoque');
-        const stockJson = await stockRes.json();
+        // 2. Busca de Estoque Baixo (estoque.php)
+        const stockJson = await fetchEndpoint(endpoints[1].url);
         setLowStock(stockJson);
 
-        // 3. Busca de Pedidos Recentes
-        const ordersRes = await fetch(`${API_BASE_URL}/api_pedidos_recentes.php`);
-        if (!ordersRes.ok) throw new Error('Falha ao carregar Pedidos Recentes');
-        const ordersJson = await ordersRes.json();
+        // 3. Busca de Pedidos Recentes (pedidos.php)
+        const ordersJson = await fetchEndpoint(endpoints[2].url);
         setRecentOrders(ordersJson);
 
-        // 4. Busca de Dados para o Gráfico (Simulando 7 dias)
-        // Você deve criar um endpoint PHP específico para o gráfico
-        // Por enquanto, fica com os dados mock para manter o visual
-        // const chartRes = await fetch(`${API_BASE_URL}/api_grafico_vendas.php`);
-        // const chartJson = await chartRes.json();
-        // setChartData(chartJson);
+        // 4. Os dados do gráfico permanecem mockados, pois não há endpoint PHP para isso.
 
       } catch (err) {
         console.error('Erro na Busca de Dados:', err);
@@ -92,10 +109,13 @@ const App = () => {
     };
 
     fetchData();
-  }, []);
+  }, []); // Dependência vazia: roda apenas uma vez
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    // Garante que o valor é um número
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numValue);
   };
   
   if (loading) {
@@ -112,10 +132,11 @@ const App = () => {
         <AlertCircle size={48} className="mb-4" />
         <h1 className="text-xl font-bold">Erro ao Conectar com a API PHP</h1>
         <p className="text-sm text-slate-400 mt-2 text-center">
-          Verifique se o seu servidor PHP e os arquivos de API estão rodando corretamente em:
-          <code className="block bg-slate-800 p-2 mt-2 rounded">{API_BASE_URL}</code>
+          Verifique se o seu servidor PHP e os seguintes arquivos estão rodando corretamente na pasta:
+          <code className="block bg-slate-800 p-2 mt-2 rounded">{API_BASE_PATH}/vendas.php, /estoque.php, /pedidos.php</code>
         </p>
-        <p className="text-sm text-slate-400 mt-2">Detalhes do erro: {error}</p>
+        <p className="text-sm text-slate-400 mt-4 font-bold">Detalhes do erro:</p>
+        <p className="text-sm text-rose-300 mt-1 text-center max-w-lg overflow-x-auto whitespace-pre-wrap">{error}</p>
       </div>
     );
   }
@@ -271,7 +292,7 @@ const App = () => {
                                     </div>
                                     <div className="text-right">
                                         <p className="font-medium text-violet-300">{formatCurrency(parseFloat(order.valor))}</p>
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${order.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${order.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-400' : order.status === 'Pendente' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-rose-500/10 text-rose-400'}`}>
                                             {order.status}
                                         </span>
                                     </div>

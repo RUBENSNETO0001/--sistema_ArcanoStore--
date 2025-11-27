@@ -1,5 +1,5 @@
 <?php
-include_once '../controle-bd/bancodedados.php';
+include'../controle/bancodedados.php';
 
 header("Access-Control-Allow-Origin: *"); 
 header("Content-Type: application/json; charset=UTF-8");
