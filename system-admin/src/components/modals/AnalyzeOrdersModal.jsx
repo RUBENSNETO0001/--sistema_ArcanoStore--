@@ -5,7 +5,6 @@ import { dashboardData } from '../../data/mockData';
 const AnalyzeOrdersModal = ({ onClose }) => {
   const orders = dashboardData.recentOrders;
 
-  // Estatísticas de pedidos por status
   const statusData = orders.reduce((acc, order) => {
     acc[order.status] = (acc[order.status] || 0) + 1;
     return acc;
@@ -16,7 +15,6 @@ const AnalyzeOrdersModal = ({ onClose }) => {
     value
   }));
 
-  // Vendas por dia
   const salesByDay = orders.reduce((acc, order) => {
     const date = new Date(order.data_pedido).toLocaleDateString('pt-BR');
     acc[date] = (acc[date] || 0) + order.valor_total;

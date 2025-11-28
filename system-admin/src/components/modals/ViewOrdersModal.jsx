@@ -65,7 +65,6 @@ const ViewOrdersModal = ({ onClose, onAction }) => {
               <th>Status</th>
               <th>Data</th>
               <th>Itens</th>
-              <th>Ações</th>
             </tr>
           </thead>
           <tbody>

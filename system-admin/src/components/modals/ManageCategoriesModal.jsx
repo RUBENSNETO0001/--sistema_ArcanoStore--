@@ -18,23 +18,10 @@ const ManageCategoriesModal = ({ onClose, onAction }) => {
     const loadCategories = async () => {
         try {
             setLoading(true);
-            // Buscar categorias - você pode criar um endpoint específico ou usar dados mock
-            const productsResponse = await ApiService.getProducts();
+            const categoriesResponse = await ApiService.getCategories();
 
-            if (productsResponse.success) {
-                // Extrair categorias únicas dos produtos
-                const uniqueCategories = {};
-                productsResponse.data.forEach(product => {
-                    if (product.categoria && product.id_categoria) {
-                        uniqueCategories[product.id_categoria] = {
-                            id_categoria: product.id_categoria,
-                            nome_categoria: product.categoria,
-                            product_count: (uniqueCategories[product.id_categoria]?.product_count || 0) + 1
-                        };
-                    }
-                });
-
-                setCategories(Object.values(uniqueCategories));
+            if (categoriesResponse.success) {
+                setCategories(categoriesResponse.data);
             }
         } catch (error) {
             console.error('Erro ao carregar categorias:', error);
@@ -79,10 +66,10 @@ const ManageCategoriesModal = ({ onClose, onAction }) => {
 
             if (editingCategory) {
                 // Editar categoria existente
-                await updateCategory(editingCategory.id_categoria, formData);
+                await ApiService.updateCategory(editingCategory.id_categoria, formData);
             } else {
                 // Adicionar nova categoria
-                await createCategory(formData);
+                await ApiService.createCategory(formData);
             }
 
             // Limpar formulário
@@ -98,30 +85,6 @@ const ManageCategoriesModal = ({ onClose, onAction }) => {
         }
     };
 
-    const createCategory = async (categoryData) => {
-        // Simulação de criação - você precisará implementar o endpoint na API
-        const newCategory = {
-            id_categoria: Math.max(...categories.map(c => c.id_categoria), 0) + 1,
-            nome_categoria: categoryData.nome_categoria,
-            product_count: 0
-        };
-
-        setCategories(prev => [...prev, newCategory]);
-        onAction('category-created', newCategory);
-    };
-
-    const updateCategory = async (id, categoryData) => {
-        // Simulação de atualização
-        setCategories(prev =>
-            prev.map(cat =>
-                cat.id_categoria === id
-                    ? { ...cat, nome_categoria: categoryData.nome_categoria }
-                    : cat
-            )
-        );
-        onAction('category-updated', { id, ...categoryData });
-    };
-
     const deleteCategory = async (id) => {
         const category = categories.find(cat => cat.id_categoria === id);
 
@@ -132,7 +95,7 @@ const ManageCategoriesModal = ({ onClose, onAction }) => {
 
         if (window.confirm(`Tem certeza que deseja excluir a categoria "${category.nome_categoria}"?`)) {
             try {
-                // Simulação de exclusão
+                await ApiService.deleteCategory(id);
                 setCategories(prev => prev.filter(cat => cat.id_categoria !== id));
                 onAction('category-deleted', id);
             } catch (error) {

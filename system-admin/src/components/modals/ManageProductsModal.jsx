@@ -41,7 +41,6 @@ const ManageProductsModal = ({ onClose, onAction }) => {
         
         if (window.confirm(`Deseja excluir ${selectedProducts.length} produto(s)?`)) {
             try {
-                // Delete em lote
                 for (const productId of selectedProducts) {
                     await ApiService.deleteProduct(productId);
                 }

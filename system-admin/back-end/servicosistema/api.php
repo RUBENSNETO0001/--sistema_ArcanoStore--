@@ -1,18 +1,14 @@
 <?php
-// CORS headers mais permissivos
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Access-Control-Allow-Headers");
 header("Content-Type: application/json; charset=UTF-8");
 
-// Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
-
-// Log para debug (remova em produção)
 error_log("API Request: " . $_SERVER['REQUEST_METHOD'] . " - " . $_SERVER['QUERY_STRING']);
 
 require_once 'config/database.php';
@@ -24,14 +20,12 @@ class API {
         $this->db = new Database();
     }
 
-    // Helper method para enviar resposta JSON
     private function sendResponse($data, $statusCode = 200) {
         http_response_code($statusCode);
         echo json_encode($data);
         exit;
     }
 
-    // Get dashboard stats
     public function getDashboardStats() {
         try {
             // Teste de conexão primeiro
@@ -82,14 +76,13 @@ class API {
         }
     }
 
-    // Get all products
     public function getProducts() {
         try {
             $query = "SELECT p.*, c.nome_categoria as categoria, pi.imagem_url, pi.descricao_detalhada 
-                      FROM produto p 
-                      LEFT JOIN categoria c ON p.id_categoria = c.id_categoria 
-                      LEFT JOIN produto_itens pi ON p.id_produto = pi.id_produto
-                      ORDER BY p.id_produto DESC";
+                    FROM produto p 
+                    LEFT JOIN categoria c ON p.id_categoria = c.id_categoria 
+                    LEFT JOIN produto_itens pi ON p.id_produto = pi.id_produto
+                    ORDER BY p.id_produto DESC";
             
             $stmt = $this->db->conn->prepare($query);
             $stmt->execute();
@@ -111,14 +104,13 @@ class API {
         }
     }
 
-    // Get all orders
     public function getOrders() {
         try {
             $query = "SELECT p.*, u.nome_completo as cliente_nome 
-                      FROM pedidos p 
-                      LEFT JOIN usuario u ON p.id_cliente = u.id 
-                      ORDER BY p.data_pedido DESC
-                      LIMIT 50";
+                    FROM pedidos p 
+                    LEFT JOIN usuario u ON p.id_cliente = u.id 
+                    ORDER BY p.data_pedido DESC
+                    LIMIT 50";
             
             $stmt = $this->db->conn->prepare($query);
             $stmt->execute();
@@ -140,10 +132,36 @@ class API {
         }
     }
 
-    // Create product
+    public function getCategories() {
+        try {
+            $query = "SELECT c.*, COUNT(p.id_produto) as product_count 
+                    FROM categoria c 
+                    LEFT JOIN produto p ON c.id_categoria = p.id_categoria 
+                    GROUP BY c.id_categoria, c.nome_categoria
+                    ORDER BY c.nome_categoria";
+            
+            $stmt = $this->db->conn->prepare($query);
+            $stmt->execute();
+            
+            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $this->sendResponse([
+                'success' => true,
+                'data' => $categories,
+                'count' => count($categories)
+            ]);
+            
+        } catch (PDOException $e) {
+            error_log("Database error in getCategories: " . $e->getMessage());
+            $this->sendResponse([
+                'success' => false,
+                'message' => 'Erro ao buscar categorias: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function createProduct($data) {
         try {
-            // Validação básica
             if (empty($data['nome_produto']) || empty($data['id_categoria'])) {
                 $this->sendResponse([
                     'success' => false,
@@ -153,9 +171,8 @@ class API {
 
             $this->db->conn->beginTransaction();
 
-            // Insere produto
             $query = "INSERT INTO produto (id_categoria, nome_produto, preco, desconto_percentual, e_novo, estoque) 
-                      VALUES (:id_categoria, :nome_produto, :preco, :desconto_percentual, :e_novo, :estoque)";
+                    VALUES (:id_categoria, :nome_produto, :preco, :desconto_percentual, :e_novo, :estoque)";
             
             $stmt = $this->db->conn->prepare($query);
             $stmt->execute([
@@ -169,10 +186,9 @@ class API {
 
             $productId = $this->db->conn->lastInsertId();
 
-            // Insere detalhes do produto se fornecidos
             if (!empty($data['imagem_url']) || !empty($data['descricao_detalhada'])) {
                 $query = "INSERT INTO produto_itens (id_produto, imagem_url, descricao_detalhada) 
-                          VALUES (:id_produto, :imagem_url, :descricao_detalhada)";
+                        VALUES (:id_produto, :imagem_url, :descricao_detalhada)";
                 
                 $stmt = $this->db->conn->prepare($query);
                 $stmt->execute([
@@ -200,17 +216,14 @@ class API {
         }
     }
 
-    // Delete product
     public function deleteProduct($id) {
         try {
             $this->db->conn->beginTransaction();
 
-            // Remove primeiro os itens do produto
             $query = "DELETE FROM produto_itens WHERE id_produto = :id";
             $stmt = $this->db->conn->prepare($query);
             $stmt->execute([':id' => $id]);
 
-            // Remove o produto
             $query = "DELETE FROM produto WHERE id_produto = :id";
             $stmt = $this->db->conn->prepare($query);
             $stmt->execute([':id' => $id]);
@@ -232,7 +245,6 @@ class API {
         }
     }
 
-    // Update order status
     public function updateOrderStatus($id, $status) {
         try {
             $query = "UPDATE pedidos SET status = :status WHERE id_pedido = :id";
@@ -255,113 +267,6 @@ class API {
             ], 500);
         }
     }
-}
-
-// Main request handler
-try {
-    $method = $_SERVER['REQUEST_METHOD'];
-    $api = new API();
-
-    // Parse query parameters
-    $queryParams = [];
-    parse_str($_SERVER['QUERY_STRING'] ?? '', $queryParams);
-
-    // Get input data
-    $input = json_decode(file_get_contents('php://input'), true) ?? [];
-
-    // Log da requisição
-    error_log("Processing: $method - Action: " . ($queryParams['action'] ?? 'none'));
-
-    if ($method === 'GET' && isset($queryParams['action'])) {
-        switch($queryParams['action']) {
-            case 'getProducts':
-                $api->getProducts();
-                break;
-            case 'getOrders':
-                $api->getOrders();
-                break;
-            case 'getDashboardStats':
-                $api->getDashboardStats();
-                break;
-            default:
-                $api->sendResponse(['success' => false, 'message' => 'Ação não reconhecida'], 400);
-        }
-    } 
-    elseif ($method === 'POST') {
-        if (isset($input['action'])) {
-            switch($input['action']) {
-                case 'createProduct':
-                    $api->createProduct($input['data'] ?? []);
-                    break;
-                case 'updateOrderStatus':
-                    if (isset($input['id']) && isset($input['status'])) {
-                        $api->updateOrderStatus($input['id'], $input['status']);
-                    } else {
-                        $api->sendResponse(['success' => false, 'message' => 'ID e status são obrigatórios'], 400);
-                    }
-                    break;
-                default:
-                    $api->sendResponse(['success' => false, 'message' => 'Ação não reconhecida'], 400);
-            }
-        } else {
-            $api->sendResponse(['success' => false, 'message' => 'Parâmetro action é obrigatório'], 400);
-        }
-    }
-    elseif ($method === 'DELETE') {
-        if (isset($input['action']) && $input['action'] === 'deleteProduct' && isset($input['id'])) {
-            $api->deleteProduct($input['id']);
-        } else {
-            $api->sendResponse(['success' => false, 'message' => 'ID do produto é obrigatório'], 400);
-        }
-    }
-    else {
-        $api->sendResponse(['success' => false, 'message' => 'Método não suportado'], 405);
-    }
-
-} catch (Exception $e) {
-    error_log("Global error: " . $e->getMessage());
-    $api->sendResponse([
-        'success' => false,
-        'message' => 'Erro interno do servidor'
-    ], 500);
-}
-
-class API {
-    private $db;
-
-    public function __construct() {
-        $this->db = new Database();
-    }
-
-    // ... outros métodos existentes ...
-
-    // CATEGORIAS - NOVOS MÉTODOS
-    public function getCategories() {
-        try {
-            $query = "SELECT c.*, COUNT(p.id_produto) as product_count 
-                      FROM categoria c 
-                      LEFT JOIN produto p ON c.id_categoria = p.id_categoria 
-                      GROUP BY c.id_categoria, c.nome_categoria
-                      ORDER BY c.nome_categoria";
-            
-            $stmt = $this->db->conn->prepare($query);
-            $stmt->execute();
-            
-            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            $this->sendResponse([
-                'success' => true,
-                'data' => $categories,
-                'count' => count($categories)
-            ]);
-            
-        } catch (PDOException $e) {
-            $this->sendResponse([
-                'success' => false,
-                'message' => 'Erro ao buscar categorias: ' . $e->getMessage()
-            ], 500);
-        }
-    }
 
     public function createCategory($data) {
         try {
@@ -372,7 +277,6 @@ class API {
                 ], 400);
             }
 
-            // Verificar se categoria já existe
             $query = "SELECT id_categoria FROM categoria WHERE nome_categoria = :nome_categoria";
             $stmt = $this->db->conn->prepare($query);
             $stmt->execute([':nome_categoria' => $data['nome_categoria']]);
@@ -413,7 +317,6 @@ class API {
                 ], 400);
             }
 
-            // Verificar se outra categoria já tem este nome
             $query = "SELECT id_categoria FROM categoria WHERE nome_categoria = :nome_categoria AND id_categoria != :id";
             $stmt = $this->db->conn->prepare($query);
             $stmt->execute([
@@ -450,7 +353,6 @@ class API {
 
     public function deleteCategory($id) {
         try {
-            // Verificar se existem produtos vinculados
             $query = "SELECT COUNT(*) as product_count FROM produto WHERE id_categoria = :id";
             $stmt = $this->db->conn->prepare($query);
             $stmt->execute([':id' => $id]);
@@ -481,27 +383,22 @@ class API {
     }
 }
 
-// Handle requests - ATUALIZE O SWITCH PRINCIPAL
-$method = $_SERVER['REQUEST_METHOD'];
-$api = new API();
-
-// Parse query parameters
-$queryParams = [];
-parse_str($_SERVER['QUERY_STRING'] ?? '', $queryParams);
-
-// Get input data
-$input = json_decode(file_get_contents('php://input'), true) ?? [];
-
+// Processamento das requisições
 try {
+    $method = $_SERVER['REQUEST_METHOD'];
+    $api = new API();
+
+    $queryParams = [];
+    parse_str($_SERVER['QUERY_STRING'] ?? '', $queryParams);
+
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+    error_log("Processing: $method - Action: " . ($queryParams['action'] ?? ($input['action'] ?? 'none')));
+
     if ($method === 'GET' && isset($queryParams['action'])) {
         switch($queryParams['action']) {
             case 'getProducts':
                 $api->getProducts();
-                break;
-            case 'getProduct':
-                if (isset($queryParams['id'])) {
-                    $api->getProduct($queryParams['id']);
-                }
                 break;
             case 'getOrders':
                 $api->getOrders();
@@ -509,11 +406,8 @@ try {
             case 'getDashboardStats':
                 $api->getDashboardStats();
                 break;
-            case 'getCategories': // NOVO CASE
+            case 'getCategories': 
                 $api->getCategories();
-                break;
-            case 'getCustomers':
-                $api->getCustomers();
                 break;
             default:
                 $api->sendResponse(['success' => false, 'message' => 'Ação não reconhecida'], 400);
@@ -525,22 +419,19 @@ try {
                 case 'createProduct':
                     $api->createProduct($input['data'] ?? []);
                     break;
-                case 'updateProduct':
-                    if (isset($input['id']) && isset($input['data'])) {
-                        $api->updateProduct($input['id'], $input['data']);
-                    }
-                    break;
                 case 'updateOrderStatus':
                     if (isset($input['id']) && isset($input['status'])) {
                         $api->updateOrderStatus($input['id'], $input['status']);
+                    } else {
+                        $api->sendResponse(['success' => false, 'message' => 'ID e status são obrigatórios'], 400);
                     }
                     break;
-                case 'createCategory': // NOVO CASE
+                case 'createCategory': 
                     if (isset($input['data'])) {
                         $api->createCategory($input['data']);
                     }
                     break;
-                case 'updateCategory': // NOVO CASE
+                case 'updateCategory': 
                     if (isset($input['id']) && isset($input['data'])) {
                         $api->updateCategory($input['id'], $input['data']);
                     }
@@ -560,7 +451,7 @@ try {
                         $api->deleteProduct($input['id']);
                     }
                     break;
-                case 'deleteCategory': // NOVO CASE
+                case 'deleteCategory': 
                     if (isset($input['id'])) {
                         $api->deleteCategory($input['id']);
                     }
@@ -578,9 +469,12 @@ try {
 
 } catch (Exception $e) {
     error_log("Global error: " . $e->getMessage());
-    $api->sendResponse([
+    $response = [
         'success' => false,
         'message' => 'Erro interno do servidor'
-    ], 500);
+    ];
+    http_response_code(500);
+    echo json_encode($response);
+    exit;
 }
 ?>

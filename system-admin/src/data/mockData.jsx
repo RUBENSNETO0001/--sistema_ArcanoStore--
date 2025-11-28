@@ -1,4 +1,3 @@
-// Dados mock baseados na sua estrutura do banco
 export const dashboardData = {
   stats: {
     totalSales: 1666.30,
@@ -29,7 +28,7 @@ export const dashboardData = {
       id_pedido: 3,
       id_cliente: 5,
       valor_total: 75.90,
-      status: 'Pendente',
+      status: 'Aprovado',
       data_pedido: '2025-11-25T22:08:33',
       item_principal: 'Caneca do Pico',
       cliente_nome: 'Jose'

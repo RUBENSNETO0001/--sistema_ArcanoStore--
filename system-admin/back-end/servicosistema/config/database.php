@@ -6,7 +6,7 @@ class Database {
         $host = 'localhost';
         $dbname = 'arcanostore';
         $username = 'root';
-        $password = ''; // Sua senha do MySQL
+        $password = '';
 
         try {
             $this->conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
@@ -15,7 +15,6 @@ class Database {
             
         } catch(PDOException $e) {
             error_log("Database connection failed: " . $e->getMessage());
-            // Não morre, apenas loga o erro
         }
     }
 }

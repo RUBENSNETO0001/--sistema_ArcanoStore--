@@ -14,7 +14,6 @@ const Dashboard = () => {
   const [activeView, setActiveView] = useState('dashboard');
   const [activeModal, setActiveModal] = useState(null);
   
-  // Estados para dados reais
   const [stats, setStats] = useState(dashboardData.stats);
   const [recentOrders, setRecentOrders] = useState(dashboardData.recentOrders);
   const [products, setProducts] = useState(dashboardData.products);
@@ -22,7 +21,6 @@ const Dashboard = () => {
   const [categoryData, setCategoryData] = useState(dashboardData.categoryData);
   const [loading, setLoading] = useState(true);
 
-  // Função para carregar dados do dashboard
   const loadDashboardData = async () => {
     try {
       setLoading(true);
@@ -33,7 +31,6 @@ const Dashboard = () => {
         ApiService.getOrders()
       ]);
 
-      // Atualiza os estados com dados reais da API
       if (statsResponse.success) {
         setStats(statsResponse.data);
       }
@@ -41,7 +38,6 @@ const Dashboard = () => {
       if (productsResponse.success) {
         setProducts(productsResponse.data || []);
         
-        // Atualiza gráfico de categorias com dados reais
         const categoryCount = productsResponse.data.reduce((acc, product) => {
           const category = product.categoria || 'Sem Categoria';
           acc[category] = (acc[category] || 0) + 1;
@@ -59,7 +55,6 @@ const Dashboard = () => {
         const orders = ordersResponse.data || [];
         setRecentOrders(orders);
         
-        // Atualiza gráfico de vendas com dados reais
         const salesByDate = orders.reduce((acc, order) => {
           if (order.status === 'Aprovado') {
             const date = new Date(order.data_pedido).toLocaleDateString('pt-BR');
@@ -77,13 +72,11 @@ const Dashboard = () => {
       
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
-      // Mantém os dados mock em caso de erro
     } finally {
       setLoading(false);
     }
   };
 
-  // useEffect para carregar dados quando o componente montar
   useEffect(() => {
     loadDashboardData();
   }, []);
@@ -101,15 +94,13 @@ const Dashboard = () => {
   const handleModalAction = (action, data) => {
     console.log('Ação do modal:', action, data);
     
-    // Recarrega dados específicos baseado na ação
     switch (action) {
       case 'product-created':
       case 'product-deleted':
       case 'products-bulk-deleted':
-        loadDashboardData(); // Recarrega produtos e estatísticas
+        loadDashboardData(); 
         break;
       case 'order-status-updated':
-        // Recarrega apenas pedidos
         ApiService.getOrders()
           .then(response => {
             if (response.success) {
@@ -130,7 +121,6 @@ const Dashboard = () => {
     customers: '👥'
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="app">

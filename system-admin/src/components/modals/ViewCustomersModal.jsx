@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ApiService from '../../services/api';
 
 const ViewCustomersModal = ({ onClose, onAction }) => {
@@ -7,36 +7,18 @@ const ViewCustomersModal = ({ onClose, onAction }) => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredCustomers, setFilteredCustomers] = useState([]);
-
-  useEffect(() => {
-    loadCustomers();
-  }, []);
-
-  useEffect(() => {
-    const filtered = customers.filter(customer =>
-      customer.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.cpf?.includes(searchTerm)
-    );
-    setFilteredCustomers(filtered);
-  }, [searchTerm, customers]);
-
-  const loadCustomers = async () => {
+  const loadCustomers = useCallback(async () => {
     try {
       setLoading(true);
-      // Como não temos um endpoint específico para clientes, vamos usar os dados dos pedidos
-      // ou criar um endpoint específico
       const ordersResponse = await ApiService.getOrders();
       
       if (ordersResponse.success) {
-        // Extrair clientes únicos dos pedidos
         const uniqueCustomers = {};
         ordersResponse.data.forEach(order => {
           if (order.cliente_nome && order.id_cliente) {
             uniqueCustomers[order.id_cliente] = {
               id: order.id_cliente,
               nome_completo: order.cliente_nome,
-              // Podemos adicionar mais dados se disponíveis
               total_pedidos: (uniqueCustomers[order.id_cliente]?.total_pedidos || 0) + 1,
               total_gasto: (uniqueCustomers[order.id_cliente]?.total_gasto || 0) + parseFloat(order.valor_total || 0)
             };
@@ -48,12 +30,24 @@ const ViewCustomersModal = ({ onClose, onAction }) => {
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);
       setError('Erro ao carregar lista de clientes');
-      // Dados mock para demonstração
       setCustomers(getMockCustomers());
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadCustomers();
+  }, [loadCustomers]);
+
+  useEffect(() => {
+    const filtered = customers.filter(customer =>
+      customer.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.cpf?.includes(searchTerm)
+    );
+    setFilteredCustomers(filtered);
+  }, [searchTerm, customers]);
 
   const getMockCustomers = () => {
     return [
@@ -214,7 +208,6 @@ const ViewCustomersModal = ({ onClose, onAction }) => {
                 <th>Status</th>
                 <th>Total Pedidos</th>
                 <th>Total Gasto</th>
-                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -258,22 +251,6 @@ const ViewCustomersModal = ({ onClose, onAction }) => {
                       </span>
                     </div>
                   </td>
-                  <td>
-                    <div className="action-buttons">
-                      <button 
-                        className="btn-view"
-                        onClick={() => onAction('view-customer-details', customer)}
-                      >
-                        Detalhes
-                      </button>
-                      <button 
-                        className="btn-edit"
-                        onClick={() => onAction('edit-customer', customer)}
-                      >
-                        Editar
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -281,7 +258,6 @@ const ViewCustomersModal = ({ onClose, onAction }) => {
         )}
       </div>
 
-      {/* Resumo */}
       <div className="customers-summary">
         <div className="summary-item">
           <span className="summary-label">Total de Clientes:</span>

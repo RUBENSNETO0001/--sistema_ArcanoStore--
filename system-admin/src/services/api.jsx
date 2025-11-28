@@ -39,7 +39,6 @@ class ApiService {
             return data;
         } catch (error) {
             console.error('API Error:', error.message);
-            // Fallback para dados mock
             return this.getMockData(endpoint);
         }
     }
@@ -116,7 +115,7 @@ class ApiService {
                         id_pedido: 3,
                         id_cliente: 5,
                         valor_total: 75.90,
-                        status: 'Pendente',
+                        status: 'Aprovado',
                         data_pedido: '2025-11-25T22:08:33',
                         item_principal: 'Caneca do Pico',
                         cliente_nome: 'Jose'
@@ -148,7 +147,6 @@ class ApiService {
         return Promise.resolve(mockData[endpoint] || { success: false, data: [] });
     }
 
-    // Products
     async getProducts() {
         return this.request('?action=getProducts');
     }
@@ -188,7 +186,6 @@ class ApiService {
         });
     }
 
-    // Orders
     async getOrders() {
         return this.request('?action=getOrders');
     }
@@ -204,12 +201,10 @@ class ApiService {
         });
     }
 
-    // Dashboard
     async getDashboardStats() {
         return this.request('?action=getDashboardStats');
     }
 
-    // Categories - NOVOS MÉTODOS
     async getCategories() {
         return this.request('?action=getCategories');
     }
@@ -235,7 +230,7 @@ class ApiService {
         });
     }
 
-    async deleteCategory(id) {
+    async deleteCategory(id, categoryData) {
         return this.request('', {
             method: 'DELETE',
             body: JSON.stringify({
@@ -245,7 +240,6 @@ class ApiService {
         });
     }
 
-    // Customers
     async getCustomers() {
         return this.request('?action=getCustomers');
     }

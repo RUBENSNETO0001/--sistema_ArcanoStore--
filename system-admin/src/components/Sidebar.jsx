@@ -80,7 +80,7 @@ const Sidebar = ({ activeView, setActiveView, onShowModal }) => {
       {/* Menu Items */}
       <nav className="sidebar-nav">
         {menuItems.map(item => (
-          <div key={item.id} className="nav-item"> {/* Chave única usando item.id */}
+          <div key={item.id} className="nav-item"> 
             <div 
               className={`nav-main-item ${activeView === item.id ? 'active' : ''}`}
               onClick={() => handleMenuItemClick(item.id)}
@@ -101,7 +101,7 @@ const Sidebar = ({ activeView, setActiveView, onShowModal }) => {
               <div className="sub-items">
                 {item.subItems.map(subItem => (
                   <div
-                    key={subItem.id} // Chave única usando subItem.id
+                    key={subItem.id} 
                     className="sub-item"
                     onClick={() => handleSubItemClick(subItem.action)}
                   >
